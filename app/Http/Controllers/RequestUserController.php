@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\RequestCollection;
+use App\Http\Resources\ReceivedUserCollection;
+use App\Http\Resources\RequestUserCollection;
+use App\Http\Resources\SuggestionCollection;
 use App\Models\RequestUser;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Foundation\Application;
@@ -42,14 +44,22 @@ class RequestUserController extends Controller
 
 			switch ($tab) {
 				case 'btnradio1':
-					$response = $this->userRepo->getConnectionSuggestions($params);
+					$response = new SuggestionCollection($this->userRepo->getConnectionSuggestions($params));
+					break;
+
+				case 'btnradio2':
+					$response = new RequestUserCollection(auth()->user()->requestUsers()->with('requestedUser')->paginate($params['takeAmount']));
+					break;
+
+				case 'btnradio3':
+					$response = new ReceivedUserCollection(auth()->user()->receivedRequests()->with('user')->paginate($params['takeAmount']));
 					break;
 			}
 
 			return response()->json([
 				'status'  => 'success',
 				'user'    => auth()->user()->id,
-				'content' => new RequestCollection($response)
+				'content' => $response
 			]);
 		}
 
@@ -59,60 +69,25 @@ class RequestUserController extends Controller
 	}
 
 	/**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return void
-	 */
-	public function create()
-	{
-		//
-	}
-
-	/**
 	 * Store a newly created resource in storage.
 	 *
 	 * @param Request $request
 	 * @return JsonResponse
 	 */
 	public function store(Request $request)
+	: JsonResponse
 	{
-		$tab = $request->input('tab');
+		$suggestionId = $request->input('suggestionId');
 
-		if ($tab === 'suggestions') {
-			$suggestionId = $request->input('suggestionId');
-
-			auth()->user()->requestUsers()->save(
-				new RequestUser([
-					'requested_user_id' => $suggestionId
-				])
-			);
-		}
+		auth()->user()->requestUsers()->save(
+			new RequestUser([
+				'requested_user_id' => $suggestionId
+			])
+		);
 
 		return response()->json([
 			'status' => 'success'
 		]);
-	}
-
-	/**
-	 * Display the specified resource.
-	 *
-	 * @param RequestUser $requestUser
-	 * @return Response
-	 */
-	public function show(RequestUser $requestUser)
-	{
-		//
-	}
-
-	/**
-	 * Show the form for editing the specified resource.
-	 *
-	 * @param RequestUser $requestUser
-	 * @return Response
-	 */
-	public function edit(RequestUser $requestUser)
-	{
-		//
 	}
 
 	/**
@@ -131,10 +106,15 @@ class RequestUserController extends Controller
 	 * Remove the specified resource from storage.
 	 *
 	 * @param RequestUser $requestUser
-	 * @return Response
+	 * @return JsonResponse
 	 */
 	public function destroy(RequestUser $requestUser)
+	: JsonResponse
 	{
-		//
+		$requestUser->delete();
+
+		return response()->json([
+			'status' => 'success'
+		]);
 	}
 }

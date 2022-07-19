@@ -18,8 +18,6 @@ class RequestUserFactory extends Factory
 	public function definition()
 	: array
 	{
-		return [
-			'requested_user_id' => 1
-		];
+		return [];
 	}
 }

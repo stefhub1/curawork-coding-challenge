@@ -2,27 +2,26 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use JsonSerializable;
 
-class RequestCollection extends ResourceCollection
+class ReceivedUserCollection extends ResourceCollection
 {
 	/**
 	 * Transform the resource collection into an array.
 	 *
 	 * @param Request $request
-	 * @return array|Arrayable|JsonSerializable
+	 * @return array
 	 */
 	public function toArray($request)
-	: array|JsonSerializable|Arrayable
+	: array
 	{
 		return [
 			'list'       => $this->collection->map(fn($el) => [
-				'id'    => $el->id,
-				'name'  => $el->name,
-				'email' => $el->email
+				'id'                => $el->id,
+				'requested_user_id' => $el->user,
+				'name'              => $el->user ? $el->user->name : '',
+				'email'             => $el->user ? $el->user->email : ''
 			]),
 			'pagination' => [
 				'total'       => $this->total(),

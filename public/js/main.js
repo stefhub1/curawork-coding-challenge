@@ -24,6 +24,9 @@ function onSuccessResponse(mode, response) {
     if (mode === 'suggestions') {
       countArray[0] = response.content.pagination.total;
       $('#suggestionsCount').html(countArray[0]);
+    } else if (mode === 'btnradio2') {
+      countArray[1] = response.content.pagination.total;
+      $('#sentRequestsCount').html(countArray[1]);
     }
     
     // Inject table tbody data
@@ -37,6 +40,14 @@ function onSuccessResponse(mode, response) {
       tbodyHtml += '<td class="align-middle">';
       if (mode === 'suggestions') {
         tbodyHtml += '<button id="create_request_btn_' + trList[i].id + '" class="btn btn-primary me-1" onclick="sendRequest(' + response.user + ', ' + trList[i].id + ')">Connect</button>';
+      } else if (mode === 'btnradio2') {
+        tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger me-1" onclick="deleteRequest(' + response.user + ', ' + trList[i].id + ')">' +
+          'Withdraw Request' +
+          '</button>';
+      } else if (mode === 'btnradio3') {
+        tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-primary me-1" onclick="acceptRequest(' + response.user + ', ' + trList[i].id + ')">' +
+          'Accept' +
+          '</button>';
       }
       tbodyHtml += '</td>';
       tbodyHtml += '</tr>';
@@ -49,12 +60,21 @@ function onSuccessResponse(mode, response) {
 }
 
 function getRequests(mode) {
-  // your code here...
+  $('#load_more_btn_parent').addClass('d-none');
+  toggleSkeleton(true);
+  
+  var params = '?page=' + skipCounter + '&takeAmount=' + takeAmount;
+  var functionsOnSuccess = [
+    [onSuccessResponse, [mode, 'response']]
+  ];
+  
+  ajax('/request-users/' + mode + params, 'GET', functionsOnSuccess, null);
 }
 
 function getMoreRequests(mode) {
-  // Optional: Depends on how you handle the "Load more"-Functionality
-  // your code here...
+  skipCounter++;
+  
+  getRequests(mode);
 }
 
 function getConnections() {
@@ -75,6 +95,9 @@ function getMoreConnectionsInCommon(userId, connectionId) {
   // your code here...
 }
 
+/**
+ * get suggestions list
+ */
 function getSuggestions() {
   $('#load_more_btn_parent').addClass('d-none');
   toggleSkeleton(true);
@@ -87,22 +110,29 @@ function getSuggestions() {
   ajax('/request-users/btnradio1' + params, 'GET', functionsOnSuccess, null);
 }
 
+/**
+ * Get more suggestions list
+ */
 function getMoreSuggestions() {
   skipCounter++;
   
   getSuggestions();
 }
 
+/**
+ * Send connection request
+ * @param userId
+ * @param suggestionId
+ */
 function sendRequest(userId, suggestionId) {
   var formItems = [
-    ['tab', 'suggestions'],
     ['suggestionId', suggestionId]
   ];
   
   var functionsOnSuccess = [
     [function (mode, response) {
       if (response.status === 'success') {
-        // remove sent request row
+        // remove suggestions row
         $('#request-row-' + suggestionId).remove();
         
         // update suggestions count
@@ -123,7 +153,27 @@ function sendRequest(userId, suggestionId) {
 }
 
 function deleteRequest(userId, requestId) {
-  // your code here...
+  var functionsOnSuccess = [
+    [function (mode, response) {
+      if (response.status === 'success') {
+        // remove sent request row
+        $('#request-row-' + requestId).remove();
+        
+        // update sent request count
+        if (countArray[1] > 0) {
+          countArray[1] -= 1;
+        }
+        $('#sentRequestsCount').html(countArray[1]);
+        
+        // update suggestions count
+        var srCount = parseInt($('#suggestionsCount').html());
+        srCount += 1;
+        $('#suggestionsCount').html(srCount)
+      }
+    }, ['suggestions', 'response']]
+  ];
+  
+  ajax('/request-users/' + requestId, 'DELETE', functionsOnSuccess, null);
 }
 
 function acceptRequest(userId, requestId) {
@@ -140,7 +190,7 @@ $(function () {
       case 'btnradio4':
         window.location.href = '/home';
         break;
-      
+  
       case 'btnradio1':
       case 'btnradio2':
       case 'btnradio3':
@@ -151,7 +201,8 @@ $(function () {
   
   skipCounter = 1;
   
-  switch ($('input:radio[name=btnradio]:checked').attr('id')) {
+  var checkedRadio = $('input:radio[name=btnradio]:checked');
+  switch (checkedRadio.attr('id')) {
     case 'btnradio4':
       break;
     
@@ -160,6 +211,7 @@ $(function () {
       break;
     case 'btnradio2':
     case 'btnradio3':
+      getRequests(checkedRadio.attr('id'))
       break;
   }
 });
