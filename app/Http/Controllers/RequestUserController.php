@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ReceivedUserCollection;
 use App\Http\Resources\RequestUserCollection;
 use App\Http\Resources\SuggestionCollection;
+use App\Models\CommonConnection;
 use App\Models\Connection;
 use App\Models\RequestUser;
 use App\Repositories\UserRepository;
@@ -35,15 +36,15 @@ class RequestUserController extends Controller
 	 *
 	 * @return JsonResponse|Application|Factory|View
 	 */
-	public function index(Request $request, $tab = 'btnradio1')
+	public function index(Request $request, $tab = 'suggestions')
 	{
 		$params = $request->all();
 
 		if ($request->ajax()) {
 			$response = match ($tab) {
-				'btnradio1' => new SuggestionCollection($this->userRepo->getConnectionSuggestions($params)),
-				'btnradio2' => new RequestUserCollection(auth()->user()->requestUsers()->with('requestedUser')->paginate($params['takeAmount'])),
-				'btnradio3' => new ReceivedUserCollection(auth()->user()->receivedRequests()->with('user')->paginate($params['takeAmount'])),
+				'suggestions' => new SuggestionCollection($this->userRepo->getConnectionSuggestions($params)),
+				'sent' => new RequestUserCollection(auth()->user()->requestUsers()->with('requestedUser')->paginate($params['takeAmount'])),
+				'received' => new ReceivedUserCollection(auth()->user()->receivedRequests()->with('user')->paginate($params['takeAmount'])),
 				default => null,
 			};
 
@@ -91,11 +92,45 @@ class RequestUserController extends Controller
 	public function update(Request $request, RequestUser $requestUser)
 	: JsonResponse
 	{
-		auth()->user()->connectedUsers()->save(
+		$request->user()->connectedUsers()->save(
 			new Connection([
-				'connected_user_id' => $requestUser->requested_user_id
+				'connected_user_id' => $requestUser->user_id
 			])
 		);
+
+		// update common connections
+		$requestUser->user
+			->connectedUsers()
+			->pluck('connected_user_id')
+			->map(function ($connectUser) use ($requestUser) {
+				$checkCommonConnected = auth()->user()->connectedUsers()->where('connected_user_id', $connectUser)->count();
+				if ($checkCommonConnected > 0) {
+					$checkCommon = CommonConnection::where('user_id', auth()->user()->id)
+						->where('common_user_id', $requestUser->user_id)
+						->where('common_connected_user_id', $connectUser)
+						->count();
+					if (!$checkCommon) {
+						$newCommonConnect = new CommonConnection();
+						$newCommonConnect->user_id = auth()->user()->id;
+						$newCommonConnect->common_user_id = $requestUser->user_id;
+						$newCommonConnect->common_connected_user_id = $connectUser;
+						$newCommonConnect->save();
+					}
+
+					$checkCommon1 = CommonConnection::where('common_user_id', auth()->user()->id)
+						->where('user_id', $requestUser->user_id)
+						->where('common_connected_user_id', $connectUser)
+						->count();
+
+					if (!$checkCommon1) {
+						$newCommonConnect1 = new CommonConnection();
+						$newCommonConnect1->user_id = $requestUser->user_id;
+						$newCommonConnect1->common_user_id = auth()->user()->id;
+						$newCommonConnect1->common_connected_user_id = $connectUser;
+						$newCommonConnect1->save();
+					}
+				}
+			});
 
 		$requestUser->delete();
 

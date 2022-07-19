@@ -24,10 +24,10 @@ function onSuccessResponse(mode, response) {
     if (mode === 'suggestions') {
       countArray[0] = response.content.pagination.total;
       $('#suggestionsCount').html(countArray[0]);
-    } else if (mode === 'btnradio2') {
+    } else if (mode === 'sent') {
       countArray[1] = response.content.pagination.total;
       $('#sentRequestsCount').html(countArray[1]);
-    } else if (mode === 'btnradio3') {
+    } else if (mode === 'received') {
       countArray[2] = response.content.pagination.total;
       $('#receivedRequestsCount').html(countArray[2]);
     } else if (mode === 'connections') {
@@ -46,20 +46,20 @@ function onSuccessResponse(mode, response) {
       tbodyHtml += '<td class="align-middle">';
       if (mode === 'suggestions') {
         tbodyHtml += '<button id="create_request_btn_' + trList[i].id + '" class="btn btn-primary me-1" onclick="sendRequest(' + response.user + ', ' + trList[i].id + ')">Connect</button>';
-      } else if (mode === 'btnradio2') {
+      } else if (mode === 'sent') {
         tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger me-1" onclick="deleteRequest(' + response.user + ', ' + trList[i].id + ')">' +
           'Withdraw Request' +
           '</button>';
-      } else if (mode === 'btnradio3') {
+      } else if (mode === 'received') {
         tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-primary me-1" onclick="acceptRequest(' + response.user + ', ' + trList[i].id + ')">' +
           'Accept' +
           '</button>';
       } else if (mode === 'connections') {
-        tbodyHtml += '<button style="width: 220px" id="get_connections_in_common_' + trList[i].id + '" class="btn btn-primary" type="button"' +
+        tbodyHtml += '<button style="width: 220px" id="get_connections_in_common_' + trList[i].id + '" class="btn btn-primary me-1" type="button"' +
           ' data-bs-toggle="collapse" data-bs-target="#collapse_' + trList[i].id + '" aria-expanded="false" aria-controls="collapseExample" ' + (trList[i].count === 0 ? "disabled" : "") + '>' +
           'Connections in common (' + trList[i].count + ')' +
           '</button>';
-        tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger me-1" onclick="removeConnection(' + response.user + ', ' + trList[i].id + ')">' +
+        tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger" onclick="removeConnection(' + response.user + ', ' + trList[i].id + ')">' +
           'Remove Connection' +
           '</button>';
       }
@@ -130,7 +130,7 @@ function getSuggestions() {
     [onSuccessResponse, ['suggestions', 'response']]
   ];
   
-  ajax('/request-users/btnradio1' + params, 'GET', functionsOnSuccess, null);
+  ajax('/request-users/suggestions' + params, 'GET', functionsOnSuccess, null);
 }
 
 /**
@@ -140,6 +140,49 @@ function getMoreSuggestions() {
   skipCounter++;
   
   getSuggestions();
+}
+
+/**
+ * Remove table row on success
+ *
+ * @param params
+ * @param response
+ */
+function removeRow(params, response) {
+  var modes = [
+    'suggestions', 'sent', 'received', 'connections'
+  ];
+  
+  var idsList = {
+    suggestions: [
+      '#suggestionsCount', '#sentRequestsCount'
+    ],
+    sent: [
+      '#sentRequestsCount', '#suggestionsCount'
+    ],
+    received: [
+      '#receivedRequestsCount', '#connectionsCount'
+    ],
+    connections: [
+      '#connectionsCount', '#suggestionsCount'
+    ]
+  }
+  
+  if (response.status === 'success') {
+    // remove suggestions row
+    $('#request-row-' + params.id).remove();
+    
+    // update suggestions count
+    if (countArray[modes.indexOf(params.mode)] > 0) {
+      countArray[modes.indexOf(params.mode)] -= 1;
+    }
+    $(idsList[params.mode][0]).html(countArray[modes.indexOf(params.mode)]);
+    
+    // update sent request count
+    var srCount = parseInt($(idsList[params.mode][1]).html());
+    srCount += 1;
+    $(idsList[params.mode][1]).html(srCount)
+  }
 }
 
 /**
@@ -153,78 +196,28 @@ function sendRequest(userId, suggestionId) {
   ];
   
   var functionsOnSuccess = [
-    [function (mode, response) {
-      if (response.status === 'success') {
-        // remove suggestions row
-        $('#request-row-' + suggestionId).remove();
-        
-        // update suggestions count
-        if (countArray[0] > 0) {
-          countArray[0] -= 1;
-        }
-        $('#suggestionsCount').html(countArray[0]);
-        
-        // update sent request count
-        var srCount = parseInt($('#sentRequestsCount').html());
-        srCount += 1;
-        $('#sentRequestsCount').html(srCount)
-      }
-    }, ['suggestions', 'response']]
+    [removeRow, [{id: suggestionId, mode: 'suggestions'}, 'response']]
   ];
   
   ajax('/request-users', 'POST', functionsOnSuccess, ajaxForm(formItems));
 }
 
 function deleteRequest(userId, requestId) {
-  var functionsOnSuccess = [
-    [function (mode, response) {
-      if (response.status === 'success') {
-        // remove sent request row
-        $('#request-row-' + requestId).remove();
-        
-        // update sent request count
-        if (countArray[1] > 0) {
-          countArray[1] -= 1;
-        }
-        $('#sentRequestsCount').html(countArray[1]);
-        
-        // update suggestions count
-        var srCount = parseInt($('#suggestionsCount').html());
-        srCount += 1;
-        $('#suggestionsCount').html(srCount)
-      }
-    }, ['sent', 'response']]
-  ];
+  var functionsOnSuccess = [[removeRow, [{id: requestId, mode: 'sent'}, 'response']]];
   
   ajax('/request-users/' + requestId, 'DELETE', functionsOnSuccess, null);
 }
 
 function acceptRequest(userId, requestId) {
-  var functionsOnSuccess = [
-    [function (mode, response) {
-      if (response.status === 'success') {
-        // remove sent request row
-        $('#request-row-' + requestId).remove();
-        
-        // update sent request count
-        if (countArray[2] > 0) {
-          countArray[2] -= 1;
-        }
-        $('#receivedRequestsCount').html(countArray[2]);
-        
-        // update suggestions count
-        var srCount = parseInt($('#connectionsCount').html());
-        srCount += 1;
-        $('#connectionsCount').html(srCount)
-      }
-    }, ['received', 'response']]
-  ];
+  var functionsOnSuccess = [[removeRow, [{id: requestId, mode: 'received'}, 'response']]];
   
   ajax('/request-users/' + requestId, 'PUT', functionsOnSuccess, null);
 }
 
 function removeConnection(userId, connectionId) {
-  // your code here...
+  var functionsOnSuccess = [[removeRow, [{id: connectionId, mode: 'connections'}, 'response']]];
+  
+  ajax('/connections/' + connectionId, 'DELETE', functionsOnSuccess, null);
 }
 
 $(function () {
@@ -233,10 +226,10 @@ $(function () {
       case 'btnradio4':
         window.location.href = '/connections';
         break;
-  
-      case 'btnradio1':
-      case 'btnradio2':
-      case 'btnradio3':
+    
+      case 'suggestions':
+      case 'sent':
+      case 'received':
         window.location.href = '/request-users/' + $(this).attr('id');
         break;
     }
@@ -250,11 +243,11 @@ $(function () {
       getConnections();
       break;
     
-    case 'btnradio1':
+    case 'suggestions':
       getSuggestions();
       break;
-    case 'btnradio2':
-    case 'btnradio3':
+    case 'sent':
+    case 'received':
       getRequests(checkedRadio.attr('id'))
       break;
   }

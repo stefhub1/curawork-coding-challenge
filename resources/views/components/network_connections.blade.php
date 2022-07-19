@@ -4,18 +4,18 @@
       <div class="card-header">Coding Challenge - Network connections</div>
       <div class="card-body">
         <div class="btn-group w-100 mb-3" role="group" aria-label="Basic radio toggle button group">
-          <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" {{ $tab == 'btnradio1' ? 'checked' : '' }}>
-          <label class="btn btn-outline-primary" for="btnradio1" id="get_suggestions_btn">
+          <input type="radio" class="btn-check" name="btnradio" id="suggestions" autocomplete="off" {{ $tab == 'suggestions' ? 'checked' : '' }}>
+          <label class="btn btn-outline-primary" for="suggestions" id="get_suggestions_btn">
             Suggestions (<span id="suggestionsCount">{{ $suggestionscount }}</span>)
           </label>
 
-          <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off" {{ $tab == 'btnradio2' ? 'checked' : '' }}>
-          <label class="btn btn-outline-primary" for="btnradio2" id="get_sent_requests_btn">
+          <input type="radio" class="btn-check" name="btnradio" id="sent" autocomplete="off" {{ $tab == 'sent' ? 'checked' : '' }}>
+          <label class="btn btn-outline-primary" for="sent" id="get_sent_requests_btn">
             Sent Requests (<span id="sentRequestsCount">{{ auth()->user()->requestUsers->count() }}</span>)
           </label>
 
-          <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" {{ $tab == 'btnradio3' ? 'checked' : '' }}>
-          <label class="btn btn-outline-primary" for="btnradio3" id="get_received_requests_btn">
+          <input type="radio" class="btn-check" name="btnradio" id="received" autocomplete="off" {{ $tab == 'received' ? 'checked' : '' }}>
+          <label class="btn btn-outline-primary" for="received" id="get_received_requests_btn">
             Received Requests(<span id="receivedRequestsCount">{{ auth()->user()->receivedRequests->count() }}</span>)
           </label>
 
@@ -27,11 +27,11 @@
 
         <div id="content">
 
-          @if($tab == 'btnradio1')
+          @if($tab == 'suggestions')
             <x-suggestion/>
-          @elseif($tab == 'btnradio2')
+          @elseif($tab == 'sent')
             <x-request :mode="'sent'"/>
-          @elseif($tab == 'btnradio3')
+          @elseif($tab == 'received')
             <x-request :mode="'received'"/>
           @elseif($tab == 'btnradio4')
             <x-connection/>

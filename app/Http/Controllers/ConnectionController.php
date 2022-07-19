@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ConnectionCollection;
+use App\Models\CommonConnection;
 use App\Models\Connection;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Foundation\Application;
@@ -67,6 +68,11 @@ class ConnectionController extends Controller
 	public function destroy(Connection $connection)
 	: JsonResponse
 	{
+		CommonConnection::where('user_id', $connection->user_id)->where('common_user_id', $connection->connected_user_id)->delete();
+		CommonConnection::where('common_user_id', $connection->user_id)->where('user_id', $connection->connected_user_id)->delete();
+
+		$connection->delete();
+
 		return response()->json([
 			'status' => 'success'
 		]);

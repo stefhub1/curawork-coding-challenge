@@ -47,7 +47,7 @@ class CommonConnectionSeeder extends Seeder
 
 		// Collect and create common connections
 		$user = User::find(1);
-		User::where('id', '<>', $user->id)
+		$user->connectedUsers()
 			->get()
 			->map(function ($otherUser) use ($user) {
 				// Insert common connections

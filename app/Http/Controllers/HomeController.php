@@ -36,7 +36,7 @@ class HomeController extends Controller
 
 		$suggestionsCount = $this->userRepo->getConnectionSuggestions($request, true);
 
-		$tab = 'btnradio1';
+		$tab = 'suggestions';
 
 		return view('home', compact('tab', 'suggestionsCount'));
 	}
