@@ -20,13 +20,20 @@
     <div id="content_" class="p-2">
       {{-- Display data here --}}
       <x-connection_in_common />
-    </div>
-    <div id="connections_in_common_skeletons_">
-      {{-- Paste the loading skeletons here via Jquery before the ajax to get the connections in common --}}
-    </div>
-    <div class="d-flex justify-content-center w-100 py-2">
-      <button class="btn btn-sm btn-primary" id="load_more_connections_in_common_">Load
-        more</button>
+
+      <div id="connections_in_common_skeleton" class="{{-- d-none --}}">
+        <br>
+        <div class="px-2">
+          @for ($i = 0; $i < 10; $i++)
+            <x-skeleton />
+          @endfor
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center w-100 py-2">
+        <button class="btn btn-sm btn-primary" id="load_more_connections_in_common_">
+          Load more</button>
+      </div>
     </div>
   </div>
 </div>
