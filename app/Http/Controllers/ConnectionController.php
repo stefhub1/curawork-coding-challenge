@@ -31,6 +31,7 @@ class ConnectionController extends Controller
 	/**
 	 * Display a listing of the resource.
 	 *
+	 * @param Request $request
 	 * @return JsonResponse|Application|Factory|View
 	 */
 	public function index(Request $request)
@@ -52,7 +53,7 @@ class ConnectionController extends Controller
 			]);
 		}
 
-		$tab = 'btnradio4';
+		$tab = 'connections';
 
 		$suggestionsCount = $this->userRepo->getConnectionSuggestions($params, true);
 

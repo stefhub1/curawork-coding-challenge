@@ -19,8 +19,8 @@
             Received Requests(<span id="receivedRequestsCount">{{ auth()->user()->receivedRequests->count() }}</span>)
           </label>
 
-          <input type="radio" class="btn-check" name="btnradio" id="btnradio4" autocomplete="off" {{ $tab == 'btnradio4' ? 'checked' : '' }}>
-          <label class="btn btn-outline-primary" for="btnradio4" id="get_connections_btn">
+          <input type="radio" class="btn-check" name="btnradio" id="connections" autocomplete="off" {{ $tab == 'connections' ? 'checked' : '' }}>
+          <label class="btn btn-outline-primary" for="connections" id="get_connections_btn">
             Connections (<span id="connectionsCount">{{ auth()->user()->connectedUsers->count() }}</span>)
           </label>
         </div>
@@ -33,7 +33,7 @@
             <x-request :mode="'sent'"/>
           @elseif($tab == 'received')
             <x-request :mode="'received'"/>
-          @elseif($tab == 'btnradio4')
+          @elseif($tab == 'connections')
             <x-connection/>
           @endif
 

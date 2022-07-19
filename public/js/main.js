@@ -2,6 +2,7 @@ var skeletonId = 'skeleton';
 var contentId = 'content';
 var skipCounter = 0;
 var takeAmount = 10;
+var commonCounter = [];
 var countArray = [0, 0, 0, 0];
 
 function toggleSkeleton(display) {
@@ -55,8 +56,10 @@ function onSuccessResponse(mode, response) {
           'Accept' +
           '</button>';
       } else if (mode === 'connections') {
-        tbodyHtml += '<button style="width: 220px" id="get_connections_in_common_' + trList[i].id + '" class="btn btn-primary me-1" type="button"' +
-          ' data-bs-toggle="collapse" data-bs-target="#collapse_' + trList[i].id + '" aria-expanded="false" aria-controls="collapseExample" ' + (trList[i].count === 0 ? "disabled" : "") + '>' +
+        tbodyHtml += '<button style="width: 220px" id="get_connections_in_common_' + trList[i].connected_user_id + '" class="btn btn-primary me-1" type="button" ' +
+          'data-bs-toggle="collapse" data-bs-target="#collapse_' + trList[i].connected_user_id + '" ' +
+          'aria-expanded="false" ' +
+          'aria-controls="collapseExample" ' + (trList[i].count === 0 ? "disabled" : "") + '>' +
           'Connections in common (' + trList[i].count + ')' +
           '</button>';
         tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger" onclick="removeConnection(' + response.user + ', ' + trList[i].id + ')">' +
@@ -65,8 +68,50 @@ function onSuccessResponse(mode, response) {
       }
       tbodyHtml += '</td>';
       tbodyHtml += '</tr>';
-      
+  
+      if (mode === 'connections') {
+        tbodyHtml += '<tr class="collapse" id="collapse_' + trList[i].connected_user_id + '">';
+        tbodyHtml += '<td colspan="2">';
+        tbodyHtml += '<div id="content_' + trList[i].connected_user_id + '" class="p-2 w-100">';
+        tbodyHtml += '<table class="w-100"><tbody id="table-list-' + trList[i].connected_user_id + '"></tbody></table>';
+        tbodyHtml += '<div class="d-flex justify-content-center w-100 py-2">';
+        tbodyHtml += '<div class="w-100 px-2" id="connections_in_common_skeleton_' + trList[i].connected_user_id + '">';
+        for (var c = 0; c < 5; c++) {
+          tbodyHtml += '<div class="d-flex align-items-center mb-2 text-white bg-dark p-1 shadow" style="height: 45px">';
+          tbodyHtml += '<strong class="ms-1 text-primary">Loading...</strong>';
+          tbodyHtml += '<div class="spinner-border ms-auto text-primary me-4" role="status" aria-hidden="true"></div>';
+          tbodyHtml += '</div>';
+        }
+        tbodyHtml += '</div>';
+        tbodyHtml += '<button class="btn btn-sm btn-primary d-none" id="load_more_connections_in_common_' + trList[i].connected_user_id + '" ' +
+          'onclick="getMoreConnectionsInCommon(' + response.user + ', ' + trList[i].connected_user_id + ', ' + i + ')">Load more</button>';
+        tbodyHtml += '</div>';
+        tbodyHtml += '</div>';
+        tbodyHtml += '</td>';
+        tbodyHtml += '</tr>';
+      }
+  
       $('#table-list').append(tbodyHtml);
+      commonCounter[i] = 1;
+  
+      if (mode === 'connections') {
+        var connectedID = trList[i].connected_user_id;
+        var myCollapsible = document.getElementById('collapse_' + connectedID);
+        myCollapsible.addEventListener('show.bs.collapse', function () {
+          var splitAry = $(this).attr('id').split('_');
+          var connectedID = splitAry[1];
+          var rIndex = (($(this).get(0).rowIndex - 1) / 2);
+          commonCounter[rIndex] = 1;
+          getConnectionsInCommon(response.user, connectedID, 1);
+        });
+        myCollapsible.addEventListener('hidden.bs.collapse', function () {
+          var splitAry = $(this).attr('id').split('_');
+          var connectedID = splitAry[1];
+          var rIndex = (($(this).get(0).rowIndex - 1) / 2);
+          commonCounter[rIndex] = 1;
+          $('#table-list-' + connectedID).html('');
+        });
+      }
     }
     
     toggleSkeleton(false);
@@ -100,7 +145,7 @@ function getConnections() {
     [onSuccessResponse, ['connections', 'response']]
   ];
   
-  ajax('/connections/' + params, 'GET', functionsOnSuccess, null);
+  ajax('/connections' + params, 'GET', functionsOnSuccess, null);
 }
 
 function getMoreConnections() {
@@ -109,13 +154,44 @@ function getMoreConnections() {
   getConnections();
 }
 
-function getConnectionsInCommon(userId, connectionId) {
-  // your code here...
+function getConnectionsInCommon(userId, connectionId, counter) {
+  $('#load_more_connections_in_common_' + connectionId).addClass('d-none');
+  $('#connections_in_common_skeleton_' + connectionId).removeClass('d-none');
+  
+  var params = '?page=' + counter + '&takeAmount=' + takeAmount + '&connected_id=' + connectionId;
+  var functionsOnSuccess = [
+    [function (params, response) {
+      if (response.status === 'success') {
+        if (response.content.pagination.total > 10 && response.content.pagination.lastPage > response.content.pagination.currentPage) {
+          $('#load_more_connections_in_common_' + connectionId).removeClass('d-none');
+        } else {
+          $('#load_more_connections_in_common_' + connectionId).addClass('d-none');
+        }
+  
+        var trList = response.content.list;
+        for (var i = 0; i < trList.length; i++) {
+          var tbodyHtml = '<tr id="common-connections-row-' + trList[i].id + '">';
+          tbodyHtml += '<td class="align-middle py-1" style="line-height: 30px;">';
+          tbodyHtml += trList[i].name + ' - ' + trList[i].email;
+          tbodyHtml += '</td>';
+          tbodyHtml += '</tr>';
+          
+          $('#table-list-' + connectionId).append(tbodyHtml);
+        }
+  
+        $('#connections_in_common_skeleton_' + connectionId).addClass('d-none');
+      }
+    }, ['common-connections', 'response']]
+  ];
+  
+  ajax('/common-connections' + params, 'GET', functionsOnSuccess, null);
 }
 
-function getMoreConnectionsInCommon(userId, connectionId) {
-  // Optional: Depends on how you handle the "Load more"-Functionality
-  // your code here...
+function getMoreConnectionsInCommon(userId, connectionId, i) {
+  var ind = parseInt(i)
+  commonCounter[ind]++;
+  
+  getConnectionsInCommon(userId, connectionId, commonCounter[ind]);
 }
 
 /**
@@ -223,7 +299,7 @@ function removeConnection(userId, connectionId) {
 $(function () {
   $('input:radio[name=btnradio]').on('click', function () {
     switch ($(this).attr('id')) {
-      case 'btnradio4':
+      case 'connections':
         window.location.href = '/connections';
         break;
     
@@ -236,10 +312,11 @@ $(function () {
   });
   
   skipCounter = 1;
+  commonCounter = [];
   
   var checkedRadio = $('input:radio[name=btnradio]:checked');
   switch (checkedRadio.attr('id')) {
-    case 'btnradio4':
+    case 'connections':
       getConnections();
       break;
     
