@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\SuggestCollection;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Support\Renderable;
 
@@ -32,11 +31,13 @@ class HomeController extends Controller
 	{
 		$request = [
 			'takeAmount' => 10,
-			'page'    => 1
+			'page'       => 1
 		];
 
-		$suggestions = new SuggestCollection($this->userRepo->getConnectionSuggestions($request));
+		$suggestionsCount = $this->userRepo->getConnectionSuggestions($request, true);
 
-		return view('home', compact('suggestions'));
+		$tab = 'btnradio1';
+
+		return view('home', compact('tab', 'suggestionsCount'));
 	}
 }

@@ -17,7 +17,7 @@ class UserRepository extends Repository
 	 * @param $request
 	 * @return mixed
 	 */
-	public function getConnectionSuggestions($request)
+	public function getConnectionSuggestions($request, $count = false)
 	: mixed
 	{
 		$sentRequests = auth()->user()->requestUsers->pluck('requested_user_id');
@@ -28,9 +28,10 @@ class UserRepository extends Repository
 			->merge($connections)
 			->unique();
 
-		return $this->model()
+		$query = $this->model()
 			->where('id', '<>', auth()->user()->id)
-			->whereNotIn('id', $exceptUsers)
-			->paginate($request['takeAmount']);
+			->whereNotIn('id', $exceptUsers);
+
+		return $count ? $query->count() : $query->paginate($request['takeAmount']);
 	}
 }

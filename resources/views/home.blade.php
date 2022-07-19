@@ -8,6 +8,6 @@
   <script src="{{ asset('js/main.js') }}?v={{ time() }}" defer></script>
 
   <div class="container">
-    <x-network_connections :suggestions="$suggestions"/>
+    <x-network_connections :tab="$tab" :suggestionscount="$suggestionsCount"/>
   </div>
 @endsection

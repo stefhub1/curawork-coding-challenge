@@ -47,7 +47,7 @@ function ajax(url, method, functionsOnSuccess, form) {
     success: function(response) {
       for (var j = 0; j < functionsOnSuccess.length; j++) {
         for (var i = 0; i < functionsOnSuccess[j][1].length; i++) {
-          if (functionsOnSuccess[j][1][i] == "response") {
+          if (functionsOnSuccess[j][1][i] === "response") {
             functionsOnSuccess[j][1][i] = response;
           }
         }
