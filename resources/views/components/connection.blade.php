@@ -1,16 +1,9 @@
 <div class="my-2 shadow text-white bg-dark p-1" id="">
-  <div class="d-flex justify-content-between">
-    <table class="ms-1">
-      <tbody id="table-list"></tbody>
-    </table>
-    <div>
-      <button style="width: 220px" id="get_connections_in_common_" class="btn btn-primary" type="button"
-        data-bs-toggle="collapse" data-bs-target="#collapse_" aria-expanded="false" aria-controls="collapseExample">
-        Connections in common ()
-      </button>
-      <button id="create_request_btn_" class="btn btn-danger me-1">Remove Connection</button>
-    </div>
-
+  <table class="w-100">
+    <tbody id="table-list"></tbody>
+  </table>
+  <div class="d-flex justify-content-center mt-2 py-3 d-none" id="load_more_btn_parent">
+    <button class="btn btn-primary" onclick="getMoreConnections()" id="load_more_btn">Load more</button>
   </div>
   <div class="collapse" id="collapse_">
 

@@ -30,6 +30,9 @@ function onSuccessResponse(mode, response) {
     } else if (mode === 'btnradio3') {
       countArray[2] = response.content.pagination.total;
       $('#receivedRequestsCount').html(countArray[2]);
+    } else if (mode === 'connections') {
+      countArray[3] = response.content.pagination.total;
+      $('#connectionsCount').html(countArray[3]);
     }
     
     // Inject table tbody data
@@ -50,6 +53,14 @@ function onSuccessResponse(mode, response) {
       } else if (mode === 'btnradio3') {
         tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-primary me-1" onclick="acceptRequest(' + response.user + ', ' + trList[i].id + ')">' +
           'Accept' +
+          '</button>';
+      } else if (mode === 'connections') {
+        tbodyHtml += '<button style="width: 220px" id="get_connections_in_common_' + trList[i].id + '" class="btn btn-primary" type="button"' +
+          ' data-bs-toggle="collapse" data-bs-target="#collapse_' + trList[i].id + '" aria-expanded="false" aria-controls="collapseExample" ' + (trList[i].count === 0 ? "disabled" : "") + '>' +
+          'Connections in common (' + trList[i].count + ')' +
+          '</button>';
+        tbodyHtml += '<button id="cancel_request_btn_' + trList[i].id + '" class="btn btn-danger me-1" onclick="removeConnection(' + response.user + ', ' + trList[i].id + ')">' +
+          'Remove Connection' +
           '</button>';
       }
       tbodyHtml += '</td>';
@@ -81,12 +92,21 @@ function getMoreRequests(mode) {
 }
 
 function getConnections() {
-  // your code here...
+  $('#load_more_btn_parent').addClass('d-none');
+  toggleSkeleton(true);
+  
+  var params = '?page=' + skipCounter + '&takeAmount=' + takeAmount;
+  var functionsOnSuccess = [
+    [onSuccessResponse, ['connections', 'response']]
+  ];
+  
+  ajax('/connections/' + params, 'GET', functionsOnSuccess, null);
 }
 
 function getMoreConnections() {
-  // Optional: Depends on how you handle the "Load more"-Functionality
-  // your code here...
+  skipCounter++;
+  
+  getConnections();
 }
 
 function getConnectionsInCommon(userId, connectionId) {
@@ -211,7 +231,7 @@ $(function () {
   $('input:radio[name=btnradio]').on('click', function () {
     switch ($(this).attr('id')) {
       case 'btnradio4':
-        window.location.href = '/home';
+        window.location.href = '/connections';
         break;
   
       case 'btnradio1':
@@ -227,6 +247,7 @@ $(function () {
   var checkedRadio = $('input:radio[name=btnradio]:checked');
   switch (checkedRadio.attr('id')) {
     case 'btnradio4':
+      getConnections();
       break;
     
     case 'btnradio1':

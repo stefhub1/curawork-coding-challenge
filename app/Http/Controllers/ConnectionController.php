@@ -2,84 +2,73 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ConnectionCollection;
 use App\Models\Connection;
+use App\Repositories\UserRepository;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ConnectionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
+	protected UserRepository $userRepo;
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+	/**
+	 * Create a new controller instance.
+	 *
+	 * @return void
+	 */
+	public function __construct(UserRepository $userRepository)
+	{
+		$this->middleware('auth');
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+		$this->userRepo = $userRepository;
+	}
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Connection  $connection
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Connection $connection)
-    {
-        //
-    }
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @return JsonResponse|Application|Factory|View
+	 */
+	public function index(Request $request)
+	: View|Factory|JsonResponse|Application
+	{
+		$params = $request->all();
+		if ($request->ajax()) {
+			$response = new ConnectionCollection(
+				auth()->user()
+					->connectedUsers()
+					->with('connectedUser')
+					->paginate($params['takeAmount'])
+			);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Connection  $connection
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Connection $connection)
-    {
-        //
-    }
+			return response()->json([
+				'status'  => 'success',
+				'user'    => auth()->user()->id,
+				'content' => $response
+			]);
+		}
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Connection  $connection
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Connection $connection)
-    {
-        //
-    }
+		$tab = 'btnradio4';
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Connection  $connection
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Connection $connection)
-    {
-        //
-    }
+		$suggestionsCount = $this->userRepo->getConnectionSuggestions($params, true);
+
+		return view('home', compact('tab', 'suggestionsCount'));
+	}
+
+	/**
+	 * Remove the specified resource from storage.
+	 *
+	 * @param Connection $connection
+	 * @return JsonResponse
+	 */
+	public function destroy(Connection $connection)
+	: JsonResponse
+	{
+		return response()->json([
+			'status' => 'success'
+		]);
+	}
 }

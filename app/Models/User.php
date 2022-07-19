@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -78,11 +77,17 @@ class User extends Authenticatable
 
 	/**
 	 * Connected in Common
-	 * @return HasManyThrough
+	 * @return HasMany
 	 */
 	public function commonConnectedUsers()
-	: HasManyThrough
+	: HasMany
 	{
-		return $this->hasManyThrough(CommonConnection::class, 'user_id', 'common_user_id');
+		return $this->hasMany(CommonConnection::class, 'user_id');
+	}
+
+	public function sharedUsers()
+	: HasMany
+	{
+		return $this->hasMany(CommonConnection::class, 'common_user_id');
 	}
 }

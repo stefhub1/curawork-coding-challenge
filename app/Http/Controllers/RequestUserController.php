@@ -40,21 +40,12 @@ class RequestUserController extends Controller
 		$params = $request->all();
 
 		if ($request->ajax()) {
-			$response = null;
-
-			switch ($tab) {
-				case 'btnradio1':
-					$response = new SuggestionCollection($this->userRepo->getConnectionSuggestions($params));
-					break;
-
-				case 'btnradio2':
-					$response = new RequestUserCollection(auth()->user()->requestUsers()->with('requestedUser')->paginate($params['takeAmount']));
-					break;
-
-				case 'btnradio3':
-					$response = new ReceivedUserCollection(auth()->user()->receivedRequests()->with('user')->paginate($params['takeAmount']));
-					break;
-			}
+			$response = match ($tab) {
+				'btnradio1' => new SuggestionCollection($this->userRepo->getConnectionSuggestions($params)),
+				'btnradio2' => new RequestUserCollection(auth()->user()->requestUsers()->with('requestedUser')->paginate($params['takeAmount'])),
+				'btnradio3' => new ReceivedUserCollection(auth()->user()->receivedRequests()->with('user')->paginate($params['takeAmount'])),
+				default => null,
+			};
 
 			return response()->json([
 				'status'  => 'success',

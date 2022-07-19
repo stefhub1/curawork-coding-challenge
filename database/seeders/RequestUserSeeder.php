@@ -19,7 +19,7 @@ class RequestUserSeeder extends Seeder
 		$faker = Factory::create();
 		User::all()->map(
 			fn(User $user) => RequestUser::factory()
-				->count(30)
+				->count(80)
 				->state(function (array $attributes) use ($user, $faker) {
 					// Get already inserted request IDs
 					$addedRequestIDs = $user->receivedRequests->pluck('requested_user_id');

@@ -23,7 +23,7 @@ class CommonConnectionSeeder extends Seeder
 		User::all()
 			->map(
 				fn($user) => Connection::factory()
-					->count(15)
+					->count(50)
 					->state(function (array $attributes) use ($user, $faker) {
 						// Get random request user
 						$randomRequestUser = $user->requestUsers
@@ -46,33 +46,31 @@ class CommonConnectionSeeder extends Seeder
 			);
 
 		// Collect and create common connections
-		User::all()
-			->map(
-				fn($user) => User::where('id', '<>', $user->id)
-					->get()
-					->map(function ($otherUser) use ($user) {
-						// Insert common connections
-						$user->connectedUsers
+		$user = User::find(1);
+		User::where('id', '<>', $user->id)
+			->get()
+			->map(function ($otherUser) use ($user) {
+				// Insert common connections
+				$user->connectedUsers
+					->pluck('connected_user_id')
+					->intersect(
+						$otherUser->connectedUsers
 							->pluck('connected_user_id')
-							->intersect(
-								$otherUser->connectedUsers
-									->pluck('connected_user_id')
-							)
-							->map(function ($commonConnection) use ($user, $otherUser) {
-								$commonConnectedCount = CommonConnection::where('user_id', $user->id)
-									->where('common_user_id', $otherUser->id)
-									->where('common_connected_user_id', $commonConnection)
-									->count();
+					)
+					->map(function ($commonConnection) use ($user, $otherUser) {
+						$commonConnectedCount = CommonConnection::where('user_id', $user->id)
+							->where('common_user_id', $otherUser->id)
+							->where('common_connected_user_id', $commonConnection)
+							->count();
 
-								if (!$commonConnectedCount) {
-									$newCommonConnect = new CommonConnection();
-									$newCommonConnect->user_id = $user->id;
-									$newCommonConnect->common_user_id = $otherUser->id;
-									$newCommonConnect->common_connected_user_id = $commonConnection;
-									$newCommonConnect->save();
-								}
-							});
-					})
-			);
+						if (!$commonConnectedCount) {
+							$newCommonConnect = new CommonConnection();
+							$newCommonConnect->user_id = $user->id;
+							$newCommonConnect->common_user_id = $otherUser->id;
+							$newCommonConnect->common_connected_user_id = $commonConnection;
+							$newCommonConnect->save();
+						}
+					});
+			});
 	}
 }
