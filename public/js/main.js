@@ -27,6 +27,9 @@ function onSuccessResponse(mode, response) {
     } else if (mode === 'btnradio2') {
       countArray[1] = response.content.pagination.total;
       $('#sentRequestsCount').html(countArray[1]);
+    } else if (mode === 'btnradio3') {
+      countArray[2] = response.content.pagination.total;
+      $('#receivedRequestsCount').html(countArray[2]);
     }
     
     // Inject table tbody data
@@ -170,14 +173,34 @@ function deleteRequest(userId, requestId) {
         srCount += 1;
         $('#suggestionsCount').html(srCount)
       }
-    }, ['suggestions', 'response']]
+    }, ['sent', 'response']]
   ];
   
   ajax('/request-users/' + requestId, 'DELETE', functionsOnSuccess, null);
 }
 
 function acceptRequest(userId, requestId) {
-  // your code here...
+  var functionsOnSuccess = [
+    [function (mode, response) {
+      if (response.status === 'success') {
+        // remove sent request row
+        $('#request-row-' + requestId).remove();
+        
+        // update sent request count
+        if (countArray[2] > 0) {
+          countArray[2] -= 1;
+        }
+        $('#receivedRequestsCount').html(countArray[2]);
+        
+        // update suggestions count
+        var srCount = parseInt($('#connectionsCount').html());
+        srCount += 1;
+        $('#connectionsCount').html(srCount)
+      }
+    }, ['received', 'response']]
+  ];
+  
+  ajax('/request-users/' + requestId, 'PUT', functionsOnSuccess, null);
 }
 
 function removeConnection(userId, connectionId) {

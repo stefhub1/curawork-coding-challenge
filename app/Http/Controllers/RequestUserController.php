@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ReceivedUserCollection;
 use App\Http\Resources\RequestUserCollection;
 use App\Http\Resources\SuggestionCollection;
+use App\Models\Connection;
 use App\Models\RequestUser;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Foundation\Application;
@@ -12,7 +13,6 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class RequestUserController extends Controller
 {
@@ -95,11 +95,22 @@ class RequestUserController extends Controller
 	 *
 	 * @param Request $request
 	 * @param RequestUser $requestUser
-	 * @return Response
+	 * @return JsonResponse
 	 */
 	public function update(Request $request, RequestUser $requestUser)
+	: JsonResponse
 	{
-		//
+		auth()->user()->connectedUsers()->save(
+			new Connection([
+				'connected_user_id' => $requestUser->requested_user_id
+			])
+		);
+
+		$requestUser->delete();
+
+		return response()->json([
+			'status' => 'success'
+		]);
 	}
 
 	/**
